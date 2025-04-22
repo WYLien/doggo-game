@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>狗狗的戀愛學測任務</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-image: url('background.jpg');
+      background-size: cover;
+      background-position: center;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    #title {
+      width: 30%;
+      max-width: 400px;
+      margin: 0 auto 10px;
+      opacity: 0;
+      transition: opacity 1s ease-in;
+    }
+
+    #dialogue-box {
+      position: relative;
+      background-image: url('dialogue-box.png');
+      background-size: cover;
+      background-position: center;
+      width: 60%;
+      max-width: 500px;
+      height: 100px;
+      padding: 10px 30px 10px 70px;
+      margin: 10px auto 20px;
+      text-align: left;
+      font-size: 18px;
+      line-height: 1.6;
+      display: flex;
+      align-items: center;
+      border-radius: 16px;
+    }
+
+    #avatar {
+      position: absolute;
+      left: 22px;
+      top: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    }
+
+    #next-btn {
+      background-color: transparent;
+      border: none;
+      font-size: 36px;
+      cursor: pointer;
+      color: #ff69b4;
+      margin-top: 5px;
+      transition: transform 0.2s;
+    }
+
+    #next-btn:hover {
+      transform: scale(1.1);
+      color: #ff1493;
+    }
+
+    #overlay-message {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    #overlay-message p {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #media-container {
+      overflow: hidden;
+      margin-bottom: 10px;
+      width: 100%;
+      height: 50vh; /* 控制媒體區域高度 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #media-container img,
+    #media-container video {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+      border-radius: 10px;
+      transition: transform 0.3s;
+    }
+
+    .zoomable {
+      cursor: zoom-in;
+    }
+
+    #zoom-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+
+    #zoom-modal img {
+      max-width: 95vw;
+      max-height: 95vh;
+      border-radius: 10px;
+    }
+
+    video::-webkit-media-controls,
+    video::-moz-media-controls {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <audio id="bg-music" src="background-music.mp3" loop></audio>
+
+  <div id="overlay-message">
+    <p>請開聲音，以聆聽小動物叫聲</p>
+    <button onclick="startIntro()">▶</button>
+  </div>
+
+  <div id="main-container" style="display: none;">
+    <img id="title" src="title-banner.png" alt="標題橫幅">
+
+    <div id="media-container"></div>
+
+    <div id="dialogue-box">
+      <img id="avatar" src="dog.png" alt="角色頭像">
+      <div id="dialogue-text">狗狗：嗚嗚～今天也被好多配對左滑了⋯⋯</div>
+    </div>
+
+    <button id="next-btn" onclick="nextDialogue()">▶</button>
+  </div>
+
+  <div id="zoom-modal" onclick="closeZoom()">
+    <img id="zoom-img" src="" alt="放大圖片">
+  </div>
+
+  <script>
+    const bgMusic = document.getElementById("bg-music");
+    bgMusic.volume = 0.5;
+
+    function startIntro() {
+      document.getElementById("overlay-message").style.display = 'none';
+      document.getElementById("main-container").style.display = 'block';
+      document.getElementById("title").style.opacity = 1;
+      bgMusic.play().catch(err => {
+        console.log("音樂播放失敗：", err);
+      });
+      showMedia('help-dog.mp4', 'video');
+    }
+
+    const dialogues = [
+      { speaker: 'dog', text: '欸欸欸！這是誰！一隻貓貓？感覺好可愛，立刻右滑！', media: 'sad-dog.jpg', type: 'image' },
+      { speaker: 'system', text: '配對成功！', media: 'match.mp4', type: 'video' },
+      { speaker: 'narrator', text: '狗狗和貓貓開始天天聊天，一聊就是一個月。', media: 'dog-and-cat.jpg', type: 'image' },
+      { speaker: 'dog', text: '那個⋯⋯貓貓，你願意和我見面嗎？', media: 'dog-and-cat.jpg', type: 'image' },
+      { speaker: 'cat', text: '你不是快考學測了嗎？', media: 'dog-and-cat.jpg', type: 'image' },
+      { speaker: 'cat', text: '如果你考到平均頂標，我就答應見你喔♥', media: 'dog-and-cat.jpg', type: 'image' },
+      { speaker: 'dog', text: '蛤？我不太會唸書⋯⋯', media: 'dog-and-cat.jpg', type: 'image' },
+      { speaker: 'dog', text: '我要來查查有沒有有效學習的方法⋯⋯', media: 'dog-and-cat.jpg', type: 'image' },
+      { speaker: 'narrator', text: '（狗狗發現了神奇的「組塊記憶法」！）（點擊圖片放大查看）', media: 'explanation.jpg', type: 'image' },
+      { speaker: 'narrator', text: '不擅長讀書的狗狗雖然發現了「組塊記憶法」這個技巧，但是仍然手足無措。你可以救救他，陪他做幾道練習題嗎？', media: 'help-dog.mp4', type: 'video' },
+      { speaker: 'narrator', text: '（繼續遊戲，救救狗狗！）', media: 'help-dog.mp4', type: 'video' },
+      { speaker: 'narrator', text: '先從國文科開始吧！請閱讀並理解這篇課文～', media: 'chinese-text.jpg', type: 'image' },
+      { speaker: 'narrator', text: '現在來進行組塊記憶練習吧！請稍等，題目正在努力生成中～', media: 'https://wordwall.net/tc/embed/d15b6b1e6c504f27abf20042434513ae?themeId=61&templateId=2&fontStackId=0', type: 'iframe' },
+      { speaker: 'dog', text: '好像沒有想像中那麼難耶！！但是還要再更熟悉～', media: 'dog-happy.mp4', type: 'video' },
+      { speaker: 'narrator', text: '接下來幫助狗狗學習英文科吧！請瀏覽一下這些單字。要怎麼背誦比較好呢？', media: 'english-text.jpg', type: 'image' },
+      { speaker: 'narrator', text: '好像可以把這些字分成不同組塊唷！來幫助狗狗吧～（請稍等，題目正在努力生成中～）', media: 'https://wordwall.net/tc/embed/ed7b9c4a5ddb4cc8a78b279ff4e68d77?themeId=60&templateId=2&fontStackId=0', type: 'iframe' },
+      { speaker: 'dog', text: '分成不同類別後再背誦，好像有比較容易耶！', media: 'dog-happy.mp4', type: 'video' },
+      { speaker: 'dog', text: '可是還有我最不會的自然科要讀🙀', media: 'help-dog.mp4', type: 'video' },
+      { speaker: 'narrator', text: '請幫狗狗看一下自然科課文。該怎麼使用組塊記憶法來幫他呢？', media: 'science-text.jpg', type: 'image' },
+      { speaker: 'narrator', text: '試試看這樣分類吧！（請稍等，題目正在努力生成中～）', media: 'https://wordwall.net/tc/embed/082788262f3d42eab9a05a04bda301f5?themeId=55&templateId=2&fontStackId=0', type: 'iframe' },
+      { speaker: 'dog', text: '嗷嗷！沒想到竟然真的背起來了～', media: 'dog-happy.mp4', type: 'video' },
+      { speaker: 'dog', text: '最後是社會科，對我來說應該是一小塊骨頭而已😼', media: 'dog-happy.mp4', type: 'video' },
+      { speaker: 'narrator', text: '請瀏覽社會科課文。', media: 'social-text.jpg', type: 'image' },
+      { speaker: 'narrator', text: '你是不是也跟狗狗一樣，已經駕輕就熟了呢？（請稍等，題目正在努力生成中～）', media: 'https://wordwall.net/tc/embed/fadcbb6fa7d441f39b12f8a54941b041?themeId=27&templateId=2&fontStackId=0', type: 'iframe' },
+      { speaker: 'narrator', text: '在你的幫助下，狗狗成功在學測中考到了頂標！！', media: 'dog-high-grade.mp4', type: 'video' },
+      { speaker: 'narrator', text: '雖然與貓貓的感情還要慢慢培養，但是終於獲得了見面的機會了😻這一切都要歸功於你對狗狗的幫助～', media: 'dog-and-cat-together-forever.mp4', type: 'video' },
+      { speaker: 'narrator', text: '（重新整理頁面即可重新開始遊戲）', media: 'dog-and-cat-together-forever.mp4', type: 'video' },
+    ];
+
+    let index = -1;
+
+    function nextDialogue() {
+      index++;
+      if (index >= dialogues.length) {
+        document.getElementById("dialogue-text").innerText = "（重新整理頁面即可重新開始遊戲）";
+        document.getElementById("next-btn").innerText = "▶";
+        document.getElementById("avatar").style.display = "none";
+        return;
+      }
+
+      const current = dialogues[index];
+      const textBox = document.getElementById("dialogue-text");
+      const avatar = document.getElementById("avatar");
+
+      textBox.innerText =
+        (current.speaker === 'dog' ? '狗狗：' :
+         current.speaker === 'cat' ? '貓貓：' :
+         '') + current.text;
+
+      if (current.speaker === 'dog') {
+        avatar.src = 'dog.png';
+        avatar.style.display = 'block';
+      } else if (current.speaker === 'cat') {
+        avatar.src = 'cat.png';
+        avatar.style.display = 'block';
+      } else {
+        avatar.style.display = 'none';
+      }
+
+      showMedia(current.media, current.type);
+    }
+
+function showMedia(src, type) {
+  const container = document.getElementById("media-container");
+  container.innerHTML = '';
+
+  if (type === 'image') {
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = "狗狗與貓貓的對話延續";
+    img.loading = "lazy";
+
+    // 判斷是否為可放大的圖片
+    const zoomableImages = [
+      'explanation.jpg',
+      'chinese-text.jpg',
+      'english-text.jpg',
+      'science-text.jpg',
+      'social-text.jpg'
+    ];
+
+    if (zoomableImages.includes(src)) {
+      img.classList.add("zoomable");
+      img.onclick = () => {
+        document.getElementById("zoom-img").src = src;
+        document.getElementById("zoom-modal").style.display = "flex";
+      };
+    }
+
+    container.appendChild(img);
+  } else if (type === 'video') {
+    const video = document.createElement("video");
+    video.src = src;
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = false;
+    video.removeAttribute("controls");
+    container.appendChild(video);
+  } else if (type === 'iframe') {
+    const iframe = document.createElement("iframe");
+    iframe.src = src;
+    iframe.width = "500";
+    iframe.height = "380";
+    iframe.frameBorder = "0";
+    iframe.allowFullscreen = true;
+    container.appendChild(iframe);
+  }
+}
+
+    function openZoom(src) {
+      const zoomModal = document.getElementById("zoom-modal");
+      const zoomImg = document.getElementById("zoom-img");
+      zoomImg.src = src;
+      zoomModal.style.display = "flex";
+    }
+
+    function closeZoom() {
+      document.getElementById("zoom-modal").style.display = "none";
+    }
+  </script>
+</body>
+</html>
